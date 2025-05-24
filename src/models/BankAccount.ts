@@ -1,59 +1,55 @@
-import { Transaction } from "./Transaction";
-import { TransactionType } from "../enums/TransactionType";
 import { generateId } from "../utils/generateId";
+import { TransactionType } from "../data/customers";
+import { Transaction } from "./Transaction";
 
-export interface IAccount {
-  readonly accountNumber: string;
-  readonly ownerName: string;
-  deposit(amount: number, description?: string): boolean;
-  withdraw(amount: number, description?: string): boolean;
-  getBalance(): number;
-  getTransactionHistory(): string[];
-  getAccountSummary(): string;
-}
-
-export abstract class BankAccount implements IAccount {
-  public readonly accountNumber: string;
-  public readonly ownerName: string;
-  protected _balance: number;
-  protected transactions: Transaction[];
-
-  constructor(ownerName: string, initialDeposit: number = 0) {
-    this.accountNumber = generateId("acct_");
-    this.ownerName = ownerName;
-    this._balance = 0;
-    this.transactions = [];
-
-    if (initialDeposit > 0) {
-      this.deposit(initialDeposit, "Initial deposit");
+export class BankAccount{
+    public readonly accountNumber: string;
+    public name: string;
+    public intialDeposit: number;
+    public balance: number;
+    public transactions: Transaction[];
+    constructor(name: string, intialDeposit = 0){
+        this.accountNumber = generateId("acc_");
+        this.name = name;
+        this.intialDeposit = intialDeposit
+        this.balance = intialDeposit;
+        this.transactions = [];
     }
-  }
-
-  public deposit(amount: number, description = "Deposit"): boolean {
-    if (amount <= 0) return false;
-    this._balance += amount;
-    this.transactions.push(
-      new Transaction(TransactionType.Deposit, amount, description)
-    );
-    return true;
-  }
-
-  public withdraw(amount: number, description = "Withdrawal"): boolean {
-    if (amount <= 0 || this._balance < amount) return false;
-    this._balance -= amount;
-    this.transactions.push(
-      new Transaction(TransactionType.Withdraw, amount, description)
-    );
-    return true;
-  }
-
-  public getBalance(): number {
-    return this._balance;
-  }
-
-  public getTransactionHistory(): string[] {
-    return this.transactions.map((txn) => txn.getDetails());
-  }
-
-  public abstract getAccountSummary(): string;
+    deposit(amount:number, description?: string): boolean{
+        if(amount < 0){
+            throw new Error ("Amount Is Less Than Zero");
+        }
+        this.balance += amount;
+        const transaction = new Transaction(TransactionType.Depost, amount, description);
+        this.transactions.push(transaction);
+        console.log(`Deposited $${amount.toFixed(2)} to ${this.accountNumber}. New balance: $${this.balance.toFixed(2)}`);
+        return true;
+    }
+    public withdraw(amount:number, description?: string): boolean{
+        if(amount < 0){
+            throw new Error ("Amount Is Less Than Zero");
+        }
+        if(this.balance < amount){
+            console.log(`You Dont Have Enough Money. Your Balance: ${this.balance}, Trying To WithDraw ${amount}`);
+            return false;
+        }
+        this.balance -= amount;
+        const transaction = new Transaction(TransactionType.WithDraw, amount, description);
+        this.transactions.push(transaction);
+        console.log(`Withdrew $${amount.toFixed(2)} from ${this.accountNumber}. New balance: $${this.balance.toFixed(2)}`);
+        return true;
+    }
+    public applyInterest(){
+    }
+    getBalance(): number{
+        return this.balance;
+    }
+    getTransactionsHistory(){
+        console.log(`Transaction History for: ${this.accountNumber}, Owner Name: ${this.name}, Account Type: ${this.constructor.name}`);
+        this.transactions.forEach(txn => console.log(txn.getDetails()));
+        return this.transactions.map(txn => txn.getDetails());
+    }
+    public getAccountSummary(): string {
+        return `Account Owner: ${this.name}, Account Balance: $${this.balance.toFixed(2)}`;
+    }
 }

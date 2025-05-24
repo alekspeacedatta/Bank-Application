@@ -1,77 +1,72 @@
-import { BankAccount, IAccount } from "./BankAccount";
+import { generateId } from "../utils/generateId";
+import { AccountType } from "../data/customers";
+import { BankAccount } from "./BankAccount";
 import { SavingsAccount } from "./SavingsAccount";
 import { CheckingAccount } from "./CheckingAccount";
-import { generateId } from "../utils/generateId";
-
 export class Customer {
-  public readonly customerId: string;
-  public readonly name: string;
-  public address: string;
-  public readonly dateOfBirth: Date;
-  private accounts: IAccount[] = [];
-  public static readonly minAgeToOpenAccount = 18;
-
-  constructor(name: string, address: string, dateOfBirth: string | Date) {
-    this.customerId = generateId("cust_");
-    this.name = name;
-    this.address = address;
-    this.dateOfBirth = new Date(dateOfBirth);
-  }
-
-  public getAge(): number {
-    const today = new Date();
-    let age = today.getFullYear() - this.dateOfBirth.getFullYear();
-    const m = today.getMonth() - this.dateOfBirth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < this.dateOfBirth.getDate())) {
-      age--;
+    public readonly customerId: string;
+    public readonly name: string;
+    public readonly address: string;
+    public readonly dateOfBirth: Date;
+    private accounts: BankAccount[];
+    constructor(name: string, address: string, dateOfBirth: string | Date){
+        this.customerId = generateId("cust_");
+        this.name = name;
+        this.address = address;
+        this.dateOfBirth = new Date(dateOfBirth);
+        this.accounts = [];
     }
-    return age;
-  }
-
-  public openAccount(
-    accountType: "savings" | "checking",
-    initialDeposit: number
-  ): IAccount | null {
-    if (this.getAge() < Customer.minAgeToOpenAccount) return null;
-    let account: IAccount;
-    if (accountType === "savings") {
-      account = new SavingsAccount(this.name, initialDeposit);
-    } else if (accountType === "checking") {
-      account = new CheckingAccount(this.name, initialDeposit);
-    } else {
-      return null;
+    openAccount(accountType: AccountType, intialDeposit: number){
+        let account;
+        if(accountType === "Savings"){
+            account = new SavingsAccount(this.name, intialDeposit);
+        }else if (accountType === "Checking"){
+            account = new CheckingAccount(this.name, intialDeposit);
+        }else{
+            throw new Error("error")
+        }
+        this.accounts.push(account);
+        return account
     }
-    this.accounts.push(account);
-    return account;
-  }
-
-  public closeAccount(accountNumber: string): boolean {
-    const idx = this.accounts.findIndex(
-      (acc) => acc.accountNumber === accountNumber
-    );
-    if (idx === -1 || this.accounts[idx].getBalance() !== 0) return false;
-    this.accounts.splice(idx, 1);
-    return true;
-  }
-
-  public getTotalBalance(): number {
-    return this.accounts.reduce((total, acc) => total + acc.getBalance(), 0);
-  }
-
-  public getCustomerSummary(): string {
-    const accountSummaries = this.accounts
-      .map((acc) => `  - ${acc.getAccountSummary()}`)
-      .join("\n");
-    return `Customer: ${this.name} (ID: ${
-      this.customerId
-    }), Age: ${this.getAge()}
-Address: ${this.address}
-Accounts (${this.accounts.length}):
-${accountSummaries || "  No accounts yet."}
-Total Balance Across All Accounts: $${this.getTotalBalance().toFixed(2)}`;
-  }
-
-  public get accountsList(): IAccount[] {
-    return this.accounts;
-  }
+    closeAccount(accountNumber: string){
+        const accountIndex = this.accounts.findIndex(account => account.accountNumber === accountNumber);
+        if(accountIndex === -1){
+            console.error(`Account ${accountNumber} Not Found For Customer ${this.name}`);
+            return false;
+        }
+        if(this.accounts[accountIndex].getBalance() !== 0){
+            console.error(`Account ${accountNumber} Must Be zero To Close, Your Current Balance: ${this.accounts[accountIndex].getBalance()}`);
+            return false
+        }
+        const closedAccount = this.accounts.splice(accountIndex, 1)[0];
+        console.log(`Account ${closedAccount.accountNumber} Is Closed For ${this.name}}`);
+        return true;        
+    }
+    getAge(): number{
+        const today = new Date();
+        let age = today.getFullYear() - this.dateOfBirth.getFullYear();
+        const m = today.getMonth() - this.dateOfBirth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < this.dateOfBirth.getDate())) {
+            age--;
+        }
+        return age;
+    }
+    getTotalBalance():number{
+        let totalBalance = 0;
+        this.accounts.forEach(account => {
+            totalBalance += account.getBalance();
+        });
+        return totalBalance;
+    }
+    getCustomerSummery(){
+        console.log(`\nCustomer ID: ${this.customerId}, Customer Name: ${this.name}, Age: ${this.getAge()}`);
+        console.log(`Address: ${this.address}`);
+        console.log(`Accounts Quantity: ${this.accounts.length}:`);
+        if(this.accounts.length < 0){
+            console.log("No Accounts Yet");
+        }else{
+            this.accounts.forEach(account => console.log(` -${account.getAccountSummary()}`));
+        }
+        console.log(`Total Balance Across All Accounts: $${this.getTotalBalance().toFixed(2)}`);
+    }
 }

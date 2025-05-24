@@ -1,66 +1,27 @@
-import { Bank } from "./services/Bank";
+import { Bank } from "./models/Bank";
+import { TransactionType } from "./data/customers";
 
-console.log("--- Bank Application Starting ---");
 
-const myBank = new Bank("Global Trust Bank");
+const myBank = new Bank("TBC");
+const customer1 = myBank.addCustomer("aleksandre", "mosashvilis2", "2004-06-26");
+const customer2 = myBank.addCustomer("nika", "mcxetis qucha", "2003-04-22");
 
-const customer1 = myBank.addCustomer(
-  "Alice Wonderland",
-  "123 Rabbit Hole Ln",
-  "1990-05-15"
-);
-const customer2 = myBank.addCustomer(
-  "Bob The Builder",
-  "456 Construction Rd",
-  "1985-11-20"
-);
+const aleksandreSavings = myBank.openCustomerAccount(customer1.customerId, "Savings", 1000);
+const aleksandreChecking = myBank.openCustomerAccount(customer1.customerId, "Checking", 5000)
+const nikasSavings = myBank.openCustomerAccount(customer2.customerId, "Savings", 1000);
+const nikasChecking = myBank.openCustomerAccount(customer2.customerId, "Checking", 5000);
 
-const aliceSavings = myBank.openCustomerAccount(
-  customer1.customerId,
-  "savings",
-  1000
-);
-const aliceChecking = myBank.openCustomerAccount(
-  customer1.customerId,
-  "checking",
-  500
-);
+nikasSavings.deposit(1000, TransactionType.Depost);
+nikasSavings.withdraw(500, TransactionType.WithDrawal);
+aleksandreSavings.deposit(2000, TransactionType.Depost);
+aleksandreChecking.withdraw(1000, TransactionType.WithDrawal);
+aleksandreChecking.deposit(2000, TransactionType.Depost);
+nikasChecking.withdraw(1000, TransactionType.WithDrawal);
+nikasChecking.deposit(2000, TransactionType.Depost);
 
-if (aliceSavings) {
-  aliceSavings.deposit(200, "Birthday gift");
-  (aliceSavings as any).applyInterest?.();
-}
-if (aliceChecking) {
-  aliceChecking.withdraw(50, "Groceries");
-}
+myBank.performTransfer(nikasSavings.accountNumber, aleksandreSavings.accountNumber, 900);
 
-const bobChecking = myBank.openCustomerAccount(
-  customer2.customerId,
-  "checking",
-  2000
-);
-if (bobChecking) {
-  bobChecking.withdraw(100, "Tools");
-}
+aleksandreSavings.getTransactionsHistory();
+aleksandreChecking.getTransactionsHistory();
 
-const alicePrimary = customer1.accountsList.find(
-  (acc) => (acc as any).accountType === "Checking"
-);
-const bobPrimary = customer2.accountsList.find(
-  (acc) => (acc as any).accountType === "Checking"
-);
-if (alicePrimary && bobPrimary) {
-  myBank.performTransfer(
-    alicePrimary.accountNumber,
-    bobPrimary.accountNumber,
-    150,
-    "Payment for services"
-  );
-}
-
-if (alicePrimary) {
-  console.log(alicePrimary.getTransactionHistory());
-}
-
-console.log(myBank.generateBankReport());
-console.log("--- Bank Application Finished ---");
+myBank.generateBankReport();
